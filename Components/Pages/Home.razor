@@ -1,0 +1,58 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div style="display:flex; flex-direction:column; width:500px;">
+    <audio @ref=audioElement controls />
+    <textarea @bind=TextToSpeak />
+</div>
+<br />
+<button @onclick=Speak>Speak</button>
+
+@code {
+    string Message = "";
+    ElementReference audioElement { get; set; }
+    private IJSObjectReference? speechModule;
+
+    const string key = "9d5b34bc280a405290f09b0da18fc779"; // change to your key
+    const string region = "koreacentral"; // change to your region
+    string Speakername = "en-US-JessaNeural"; // get more names in the Azure speech studio or google them
+    string SpeakingStyle = "cheerful"; // only supported styles for the speaker you chose
+    string TextToSpeak = "Hello.  Welcome to your AI speaking demo.";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (speechModule is null)
+        {
+            speechModule = await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./js/BasicTTS.js"); // change to whatever the path is in your wwwroot folder
+        }
+    }
+
+    async Task Speak()
+    {
+        string Speechxml = $""""
+            <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="ko-KR">
+                <voice name="{Speakername}">
+                    <mstts:express-as style="{SpeakingStyle}" styledegree="2">
+            {TextToSpeak}.
+                    </mstts:express-as>
+                </voice>
+            </speak>
+            """";
+        if (speechModule is null)
+        {
+            speechModule = await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./js/BasicTTS.js"); // change to whatever the path is in your wwwroot folder
+        }
+        await speechModule.InvokeVoidAsync("basicTTS", key, region, Speechxml, audioElement).AsTask();
+    }
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (speechModule is not null)
+        {
+            await speechModule.DisposeAsync();
+        }
+    }
+}
