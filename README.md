@@ -8,3 +8,5 @@ Note the following:
    ```<script src="https://aka.ms/csspeech/jsbrowserpackageraw"></script>```
 
    This is what creates ```window.SpeechSDK``` which is used in the JS module
+
+Also note: you should always load Javascript modules after rendering.
